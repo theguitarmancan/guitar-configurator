@@ -17,7 +17,7 @@ class Port : public QObject
     Q_PROPERTY(QVariantMap pin_inverts MEMBER m_pin_inverts NOTIFY pinInvertsChanged)
     Q_PROPERTY(QVariantMap pins MEMBER m_pins NOTIFY pinsChanged)
     Q_PROPERTY(QString image READ getImage NOTIFY imageChanged)
-    Q_PROPERTY(bool waitingForNew READ getWaitingForNew NOTIFY waitingForNewChanged)
+    Q_PROPERTY(bool waitingForNew READ getWaitingForNew WRITE setWaitingForNew NOTIFY waitingForNewChanged)
     Q_PROPERTY(QString boardImage READ getBoardImage NOTIFY boardImageChanged)
     Q_PROPERTY(bool hasDFU MEMBER m_hasDFU NOTIFY dfuFound)
     Q_PROPERTY(InputTypes::Value inputType READ getInputType WRITE setInputType NOTIFY inputTypeChanged)
@@ -68,6 +68,10 @@ public slots:
     }
     bool getWaitingForNew() const {
         return m_waitingForNew;
+    }
+    void setWaitingForNew(bool b) {
+        m_waitingForNew = b;
+        waitingForNewChanged(b);
     }
     QString getPort() const {
         return m_port;

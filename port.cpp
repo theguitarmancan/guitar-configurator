@@ -154,13 +154,17 @@ bool Port::findNew() {
     std::sort(newSp.begin(), newSp.end(), comp);
     std::set_difference(newSp.begin(), newSp.end(), m_port_list.begin(), m_port_list.end(), std::inserter(diff, diff.begin()), comp);
     m_port_list = newSp;
+    qDebug() << newSp.length();
+    for (auto a: newSp) {
+        qDebug() << a.systemLocation();
+    }
     if (diff.size() != 0) {
         auto info = diff.front();
-        QThread::currentThread()->msleep(100);
         m_port = info.systemLocation();
-        rescan(info);
-        open(info);
         if (m_waitingForNew) {
+            QThread::currentThread()->msleep(100);
+            rescan(info);
+            open(info);
             m_waitingForNew = false;
             waitingForNewChanged(m_waitingForNew);
         }

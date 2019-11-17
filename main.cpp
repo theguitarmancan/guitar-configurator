@@ -3,6 +3,7 @@
 #include <QQuickStyle>
 #include <QSerialPortInfo>
 #include <QQmlContext>
+#include <QWindow>
 #include "portscanner.h"
 #include "programmer.h"
 #include "status.h"
@@ -40,6 +41,7 @@ int main(int argc, char *argv[])
         return scriptEngine->newQObject(ArdwiinoLookup::getInstance());
     });
     auto* scanner = new PortScanner();
+    app.installNativeEventFilter(scanner);
     auto* programmer = new Programmer();
     engine.rootContext()->setContextProperty("scanner", scanner);
     engine.rootContext()->setContextProperty("programmer", programmer);
@@ -51,5 +53,9 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
     engine.load(url);
 
+    QObject* m_rootObject = engine.rootObjects().first();
+    QWindow *window = qobject_cast<QWindow *>(m_rootObject);
+    WId wid = window->winId();
+    scanner->init(wid);
     return QGuiApplication::exec();
 }

@@ -126,6 +126,7 @@ void Programmer::program(Port* port) {
         }
     } else if (m_status == Status::DFU_DISCONNECT) {
         m_status = Status::COMPLETE;
+        m_port->setWaitingForNew(true);
     }
     emit statusChanged(m_status);
     emit statusVChanged(getStatusDescription());

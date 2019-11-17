@@ -1,6 +1,48 @@
 #include "portscanner.h"
 #include <QDebug>
 
+#ifdef Q_OS_WIN
+#include <Windows.h>
+#include <Dbt.h>
+#include <strsafe.h>
+#include <ntddser.h>
+#endif
+#pragma comment(lib, "user32.lib" )
+bool PortScanner::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+{
+    if (eventType == "windows_generic_MSG") {
+        MSG* msg = reinterpret_cast<MSG*>(message);
+        auto msgType = msg->message;
+        if(msgType == WM_DEVICECHANGE)
+        {
+            PDEV_BROADCAST_HDR lpdb = reinterpret_cast<PDEV_BROADCAST_HDR>(msg->lParam);
+            switch(msg->wParam)
+            {
+            case DBT_DEVICEARRIVAL:
+                if (lpdb -> dbch_devicetype == DBT_DEVTYP_PORT)
+                {
+                    PDEV_BROADCAST_PORT_W lpdbv = reinterpret_cast<PDEV_BROADCAST_PORT_W>(lpdb);
+                    qDebug() << QString(reinterpret_cast<QChar*>(lpdbv->dbcp_name));
+                }
+                break;
+            }
+        }
+    }
+    return false;
+}
+void PortScanner::init(WId wid) {
+    m_winID = wid;
+    //On windows, it isn't enough to rely on the port list changing, so we have to use the windows API to work out if a device is hotplugged.
+#ifdef Q_OS_WIN
+    DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
+    ZeroMemory( &NotificationFilter, sizeof(NotificationFilter) );
+    NotificationFilter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+    NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+    NotificationFilter.dbcc_classguid = GUID_DEVINTERFACE_COMPORT;
+    HWND hw = (HWND)wid;   //Main window handle
+    HDEVNOTIFY hDevNotify = RegisterDeviceNotification(hw,&NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE );
+#endif
+}
 PortScanner::PortScanner(QObject *parent) : QObject(parent), m_selected(nullptr)
 {
     m_model.push_back(new Port(nullptr));
